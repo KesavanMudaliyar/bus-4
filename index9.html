@@ -1,0 +1,333 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NovaScale — Business Landing Page</title>
+  <meta name="description" content="A modern business landing page with animated hero, services, testimonials, and contact form. Built in React." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --brand: #e11d48;
+      --text: #f8fafc;
+    }
+    html, body, #root { height: 100%; }
+    body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background:#0b0d12; color:var(--text); }
+    /* Live wallpaper: animated radial gradient + subtle grid */
+    .live-wallpaper:before {
+      content: '';
+      position: absolute; inset: -20%;
+      background: radial-gradient(60% 60% at 10% 10%, rgba(225,29,72,.35) 0%, rgba(225,29,72,0) 60%),
+                  radial-gradient(50% 50% at 90% 20%, rgba(14,165,233,.25) 0%, rgba(14,165,233,0) 60%),
+                  radial-gradient(40% 40% at 50% 100%, rgba(34,197,94,.25) 0%, rgba(34,197,94,0) 60%);
+      filter: blur(60px);
+      animation: drift 30s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+    @keyframes drift { 
+      0% { transform: translate3d(0,0,0) scale(1); }
+      100% { transform: translate3d(-5%, -3%, 0) scale(1.05); }
+    }
+    .grid-overlay {
+      position:absolute; inset:0; pointer-events:none; opacity:.08;
+      background-image: linear-gradient(transparent 95%, rgba(255,255,255,.35) 96%),
+                        linear-gradient(90deg, transparent 95%, rgba(255,255,255,.35) 96%);
+      background-size: 24px 24px;
+    }
+    /* Reveal animations */
+    .reveal { opacity:0; transform: translateY(14px); transition: all .6s cubic-bezier(.2,.65,.3,1); }
+    .reveal.show { opacity:1; transform:none; }
+    .word { display:inline-block; opacity:.0; transform: translateY(.6em); transition: transform .45s ease, opacity .45s ease; }
+    .word.in { opacity:1; transform: translateY(0); }
+    /* Fancy hover */
+    .hover-raise { transition: transform .25s ease, box-shadow .25s ease; }
+    .hover-raise:hover { transform: translateY(-6px); box-shadow:0 12px 30px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.06) inset; }
+    .badge { background: linear-gradient(90deg, rgba(225,29,72,.25), rgba(14,165,233,.25)); border: 1px solid rgba(255,255,255,.12); }
+    .glass { background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(10px); }
+    .btn {
+      background: linear-gradient(90deg, #e11d48, #ec4899);
+      color:white; border-radius:14px; padding:.9rem 1.25rem; font-weight:700;
+      box-shadow: 0 10px 24px rgba(225,29,72,.35);
+      transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+    }
+    .btn:hover { transform: translateY(-2px); filter: saturate(1.1); box-shadow: 0 14px 34px rgba(225,29,72,.45); }
+    .btn:active { transform: translateY(0); }
+    .link-underline { background-image: linear-gradient(currentColor,currentColor); background-repeat:no-repeat; background-size:0% 2px; background-position:0 100%; transition:background-size .35s ease; }
+    .link-underline:hover { background-size:100% 2px; }
+    /* Testimonials avatar ring */
+    .ring-grad { background: conic-gradient(from 180deg at 50% 50%, #60a5fa, #34d399, #f472b6, #60a5fa); padding:2px; border-radius:9999px; }
+    /* Forms */
+    .field { background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.16); border-radius:14px; padding:14px 16px; color:var(--text); outline:none; }
+    .field:focus { border-color: rgba(225,29,72,.6); box-shadow: 0 0 0 4px rgba(225,29,72,.15); }
+    /* Responsive helpers */
+    @media (min-width: 1024px) { .hero-grid { grid-template-columns: 1.2fr .8fr; } }
+  </style>
+</head>
+<body>
+  <!-- Background -->
+  <div class="fixed inset-0 -z-10 live-wallpaper"></div>
+  <div class="fixed inset-0 -z-10 grid-overlay"></div>
+
+  <div id="root"></div>
+
+  <!-- React + Babel -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+
+  <!-- App Code -->
+  <script type="text/babel">
+    const { useEffect, useRef } = React;
+
+    // Simple Lucide icons (inline SVG React components)
+    const Icon = {
+      Rocket: (props) => (
+        <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M5 15a7 7 0 0 0 4 4l1-3a9 9 0 0 0 5-5l3-1a7 7 0 0 0-4-4l-1 3a9 9 0 0 0-5 5z"></path>
+          <path d="M15 9l-6 6"></path><path d="M5 9l-1-1"></path><path d="M9 5l1-1"></path>
+        </svg>
+      ),
+      Users: (props) => (
+        <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      ),
+      Star: (props) => (
+        <svg {...props} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <path d="m12 2 2.9 6.6 7.1.7-5.2 4.7 1.5 7L12 17l-6.3 4 1.5-7L2 9.3l7.1-.7L12 2z"></path>
+        </svg>
+      ),
+      Phone: (props) => (
+        <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.3 1.78.54 2.63a2 2 0 0 1-.45 2.11l-1.27 1.27a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.24 1.73.42 2.63.54A2 2 0 0 1 22 16.92z"></path>
+        </svg>
+      )
+    };
+
+    // Utility: animate on scroll
+    const useReveal = () => {
+      const ref = useRef();
+      useEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+        const io = new IntersectionObserver((entries) => {
+          entries.forEach((e) => e.isIntersecting && e.target.classList.add('show'));
+        }, { threshold: 0.2 });
+        el.querySelectorAll('.reveal').forEach((n) => io.observe(n));
+        return () => io.disconnect();
+      }, []);
+      return ref;
+    };
+
+    // AnimatedText: split into words and animate
+    const AnimatedText = ({ text, className = "" }) => {
+      const container = useRef();
+      useEffect(() => {
+        const words = container.current.querySelectorAll('.word');
+        words.forEach((w, i) => setTimeout(() => w.classList.add('in'), i * 45));
+      }, [text]);
+      return (
+        <span ref={container} className={className}>
+          {text.split(' ').map((w, i) => (
+            <span
+              key={i}
+              className="word hover:-translate-y-1 hover:rotate-[0.5deg] transition-transform duration-200 will-change-transform"
+            >
+              {w}&nbsp;
+            </span>
+          ))}
+        </span>
+      );
+    };
+
+    // Section wrappers
+    const Section = ({ id, children, className = "" }) => {
+      const ref = useReveal();
+      return (
+        <section id={id} ref={ref} className={"relative py-20 px-6 md:px-10 " + className}>
+          <div className="max-w-7xl mx-auto reveal">{children}</div>
+        </section>
+      );
+    };
+
+    const Hero = () => (
+      <Section id="home" className="pt-28">
+        <div className="grid gap-12 hero-grid items-center">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 badge px-3 py-1 rounded-full text-sm text-white/90 reveal">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Trusted by 1,200+ growing teams
+            </div>
+            <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">
+              <AnimatedText text="Scale faster with NovaScale — your growth partner for digital-first brands." />
+            </h1>
+            <p className="text-white/80 text-lg md:text-xl max-w-2xl reveal">
+              <AnimatedText text="We blend data-driven marketing, brand strategy and high-performance web experiences to convert visitors into loyal customers." />
+            </p>
+            <div className="flex flex-wrap items-center gap-4 reveal">
+              <a href="#contact" className="btn">Get free audit</a>
+              <a href="#services" className="link-underline text-white/90 font-semibold">Explore services</a>
+            </div>
+            <div className="flex items-center gap-6 reveal">
+              <div className="flex -space-x-3">
+                {[34,12,28,14].map((n,i)=>(
+                  <div key={i} className="ring-grad w-10 h-10 rounded-full">
+                    <img className="w-10 h-10 rounded-full" src={`https://i.pravatar.cc/100?img=${n}`} alt="client"/>
+                  </div>
+                ))}
+              </div>
+              <p className="text-white/70"><strong>4.9/5</strong> average rating across 300+ reviews</p>
+            </div>
+          </div>
+          <div className="reveal">
+            <div className="relative glass rounded-3xl overflow-hidden hover-raise">
+              <img
+                alt="dashboard"
+                className="w-full object-cover aspect-[4/3]"
+                src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1600&auto=format&fit=crop"
+              />
+              <div className="absolute top-4 left-4 rounded-full text-xs px-3 py-1 bg-black/50 border border-white/10">Realtime insights</div>
+              <div className="absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-black/70 to-transparent">
+                <p className="text-white/80">Beautiful analytics that make decisions obvious.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Section>
+    );
+
+    const ServiceCard = ({ icon: IconComp, title, text }) => (
+      <div className="glass rounded-2xl p-8 hover-raise">
+        <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-5">
+          <IconComp className="w-6 h-6 text-white" />
+        </div>
+        <h3 className="text-2xl font-semibold mb-2">
+          <AnimatedText text={title} />
+        </h3>
+        <p className="text-white/75">{text}</p>
+      </div>
+    );
+
+    const Services = () => (
+      <Section id="services">
+        <div className="text-center mb-12">
+          <p className="uppercase tracking-widest text-white/60">Services</p>
+          <h2 className="text-3xl md:text-5xl font-extrabold"><AnimatedText text="Everything you need to grow." /></h2>
+          <p className="text-white/70 mt-4 max-w-2xl mx-auto"><AnimatedText text="From acquisition to retention, we craft end‑to‑end systems that scale with you." /></p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6 reveal">
+          <ServiceCard icon={Icon.Rocket} title="Performance Marketing" text="Paid social + search built on rapid experimentation and creative iteration." />
+          <ServiceCard icon={Icon.Users} title="Community & CRM" text="Lifecycle flows, segmentation and loyalty programs that keep users engaged." />
+          <ServiceCard icon={Icon.Star} title="Brand & Creative" text="Distinct identities, high‑impact storytelling, and conversion‑ready design." />
+        </div>
+      </Section>
+    );
+
+    const Testimonial = ({ quote, author, role, img }) => (
+      <div className="glass rounded-2xl p-8 hover-raise">
+        <p className="text-lg italic mb-6">“{quote}”</p>
+        <div className="flex items-center gap-4">
+          <div className="ring-grad rounded-full"><img className="w-12 h-12 rounded-full" src={img} alt={author} /></div>
+          <div>
+            <p className="font-semibold">{author}</p>
+            <p className="text-white/70 text-sm">{role}</p>
+          </div>
+        </div>
+      </div>
+    );
+
+    const Testimonials = () => (
+      <Section id="testimonials">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-5xl font-extrabold"><AnimatedText text="Loved by modern teams." /></h2>
+        </div>
+        <div className="grid md:grid-cols-2 gap-6 reveal">
+          <Testimonial
+            quote="NovaScale helped us lift ROAS by 120% within six weeks. The creative testing cadence is unmatched."
+            author="Kesavan Mudaliyar"
+            role="CMO, Northwind"
+            img="photo.jpg"
+          />
+          <Testimonial
+            quote="From audit to execution, the team shipped a stunning site and automated our lifecycle flows."
+            author="Kai Patel"
+            role="Founder, Aurora Labs"
+            img="https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=300&auto=format&fit=crop"
+          />
+        </div>
+      </Section>
+    );
+
+    const Contact = () => (
+      <Section id="contact" className="pb-28">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl md:text-5xl font-extrabold"><AnimatedText text="Let’s build something great." /></h2>
+          <p className="text-white/70 mt-3"><AnimatedText text="Tell us about your goals and we’ll send a free growth plan within 24 hours." /></p>
+        </div>
+        <form className="max-w-3xl mx-auto grid md:grid-cols-2 gap-4 reveal">
+          <input required className="field md:col-span-1" placeholder="Full name" />
+          <input required type="email" className="field md:col-span-1" placeholder="Work email" />
+          <input className="field md:col-span-2" placeholder="Company / Website" />
+          <textarea className="field md:col-span-2" rows="5" placeholder="What are you looking to achieve?"></textarea>
+          <button className="btn md:col-span-2" type="submit">Request proposal</button>
+        </form>
+        <div className="flex items-center justify-center gap-3 mt-6 reveal text-white/70">
+          <Icon.Phone className="w-5 h-5" /> <a href="tel:+91 7506982107" className="link-underline">+91 7506982107</a>
+        </div>
+      </Section>
+    );
+
+    const Nav = () => {
+      const [open, setOpen] = React.useState(false);
+      return (
+        <header className="fixed top-0 inset-x-0 z-50">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 py-4 px-6 md:px-10">
+            <a href="#home" className="font-extrabold tracking-tight text-xl md:text-2xl">Nova<span className="text-rose-500">Scale</span></a>
+            <nav className={"glass rounded-full px-4 py-2 hidden md:flex items-center gap-6"}>
+              <a className="link-underline" href="#services">Services</a>
+              <a className="link-underline" href="#testimonials">Testimonials</a>
+              <a className="link-underline" href="#contact">Contact</a>
+              <a className="btn ml-2" href="#contact">Start now</a>
+            </nav>
+            <button onClick={()=>setOpen(v=>!v)} className="md:hidden glass rounded-xl px-3 py-2">Menu</button>
+          </div>
+          {open && (
+            <div className="md:hidden glass mx-6 rounded-2xl px-4 py-3">
+              <a className="block py-2" href="#services">Services</a>
+              <a className="block py-2" href="#testimonials">Testimonials</a>
+              <a className="block py-2" href="#contact">Contact</a>
+            </div>
+          )}
+        </header>
+      );
+    };
+
+    const Footer = () => (
+      <footer className="border-t border-white/10 py-10 text-center text-white/60">
+        <p>© 2025 NovaScale Inc. All rights reserved.</p>
+      </footer>
+    );
+
+    const App = () => (
+      <>
+        <Nav />
+        <main>
+          <Hero />
+          <Services />
+          <Testimonials />
+          <Contact />
+        </main>
+        <Footer />
+      </>
+    );
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
